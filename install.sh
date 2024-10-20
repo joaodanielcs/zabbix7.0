@@ -1,5 +1,6 @@
 #!/bin/bash
 # Zabbix 7.0 lts on LXC DEBIAN 12 - By João Daniel  (f6:b6:e4:96:66:e5)
+clear
 read -sp "Insira a senha que deve ser usada no banco de dados: " passDB
 
 apt update > /dev/null 2>&1 && apt upgrade -y > /dev/null 2>&1
