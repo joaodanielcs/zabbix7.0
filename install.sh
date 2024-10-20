@@ -23,7 +23,7 @@ EOF'
 sudo apt update
 sudo apt install mariadb-server -y
 clear
-systemctl status mariadb
+sudo systemctl status mariadb --no-pager
 mariadb -uroot -e "alter user root@localhost identified by '\$passDB';"
 sudo apt install apache2 -y
 clear
