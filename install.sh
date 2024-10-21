@@ -1,50 +1,108 @@
 #!/bin/bash
 # Zabbix 7.0 lts on LXC DEBIAN 12 - By João Daniel  (f6:b6:e4:96:66:e5)
-clear
-read -sp "Insira a senha que deve ser usada no banco de dados: " passDB
 
-apt update > /dev/null 2>&1 && apt upgrade -y > /dev/null 2>&1
-apt install sudo -y
+clear
+# Variaveis
+GREEN="\033[0;32m"
+BLUE="\033[0;34m"
+WHITE="\033[0;37m"
+BOLD="\033[1m"
+RESET="\033[0m"
+IP=$(hostname -I | awk '{print $1}')
+host=$(hostname)
+
+# Pergunta a senha para usar no MariaDB
+read -sp "Insira a senha que deve ser usada no MariaDB: " passDB
+clear
+
+# Atualize o sistema
+sudo apt update && sudo apt upgrade -y
+
+# Atualize timezone
 timedatectl set-timezone America/Sao_Paulo
-sudo apt install apt-transport-https curl -y
-sudo mkdir -p /etc/apt/keyrings
-sudo curl -o /etc/apt/keyrings/mariadb-keyring.pgp 'https://mariadb.org/mariadb_release_signing_key.pgp'
-sudo bash -c 'cat <<EOF > /etc/apt/sources.list.d/mariadb.sources
-# MariaDB 11 Rolling repository list - created 2024-10-20 16:01 UTC
-# https://mariadb.org/download/
-X-Repolib-Name: MariaDB
-Types: deb
-# deb.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
-# URIs: https://deb.mariadb.org/11/debian
-URIs: https://mirror.nodesdirect.com/mariadb/repo/11.rolling/debian
-Suites: bookworm
-Components: main
-Signed-By: /etc/apt/keyrings/mariadb-keyring.pgp
-EOF'
-sudo apt update
-sudo apt install mariadb-server -y
-clear
-sudo systemctl status mariadb --no-pager
-mariadb -uroot -e "alter user root@localhost identified by '\$passDB';"
-sudo apt install apache2 -y
-clear
-sudo apt install php php-{cgi,common,mbstring,net-socket,gd,xml-util,mysql,bcmath,imap,snmp} -y
-sudo apt install libapache2-mod-php -y
-clear
-wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest+debian12_all.deb
-dpkg -i zabbix-release_latest+debian12_all.deb
-sudo apt update
-sudo apt install zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-sql-scripts zabbix-agent -y
-clear
-mariadb -uroot -pzabbix_DB -e "CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin; CREATE USER zabbix@localhost IDENTIFIED BY '\$passDB'; GRANT ALL PRIVILEGES ON zabbix.* TO zabbix@localhost; SET GLOBAL log_bin_trust_function_creators = 1;"
-zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mariadb --default-character-set=utf8mb4 -uzabbix -pzabbix_DB zabbix
-mariadb -uroot -pzabbix_DB -e "SET GLOBAL log_bin_trust_function_creators = 0;"
-sudo sed -i 's/^# DBPassword=.*/DBPassword=\$passDB/' /etc/zabbix/zabbix_server.conf
-sudo systemctl restart zabbix-server zabbix-agent apache2
-sudo systemctl enable zabbix-server zabbix-agent apache2
-clear
+
+# Instalar o ccze (color service) e Neofetch
+sudo apt install -y ccze
 sudo apt install -y neofetch
 neofetch
 bash -c 'echo -e "reset\nneofetch\nsystemctl list-units --type service | egrep \"apache2|mariadb|ssh\"" >> /etc/profile.d/mymotd.sh && chmod +x /etc/profile.d/mymotd.sh'
 echo > /etc/motd
-history -c
+
+# Instalar Apache2
+sudo apt install -y apache2
+
+# Instalar PHP 8.2 e módulos necessários
+sudo apt install -y php8.2 php8.2-mysql libapache2-mod-php8.2
+
+# Instalar MariaDB sem interação
+sudo DEBIAN_FRONTEND=noninteractive apt install -y mariadb-server
+
+# Configure o MariaDB
+sleep 20
+sudo mariadb -uroot -e "alter user root@localhost identified by '$passDB';"
+sudo mariadb -uroot -p$passDB -e "CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+sudo mariadb -uroot -p$passDB -e "CREATE USER 'zabbix'@'localhost' IDENTIFIED BY '$passDB';"
+sudo mariadb -uroot -p$passDB -e "GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';"
+sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 1;"
+sudo mariadb -uroot -p$passDB -e "FLUSH PRIVILEGES;"
+
+# Adicione o repositório do Zabbix 7.0
+wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest+debian12_all.deb && dpkg -i zabbix-release_latest+debian12_all.deb
+sudo apt update
+
+# Instalar o Zabbix
+sudo apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-agent zabbix-sql-scripts
+
+# Configure o Zabbix
+sleep 10
+zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mariadb --default-character-set=utf8mb4 -uzabbix -p$passDB zabbix
+sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 0;"
+sudo sed -i "s/^# DBPassword=.*/DBPassword=$passDB/" /etc/zabbix/zabbix_server.conf
+
+sudo bash -c "cat <<'EOF' > /etc/zabbix/web/zabbix.conf.php
+<?php
+global \$DB;
+
+\$DB['TYPE']     = 'MYSQL';
+\$DB['SERVER']   = 'localhost';
+\$DB['PORT']     = '0';
+\$DB['DATABASE'] = 'zabbix';
+\$DB['USER']     = 'zabbix';
+\$DB['PASSWORD'] = '$passDB';
+
+\$DB['SCHEMA'] = '';
+
+\$ZBX_SERVER      = 'localhost';
+\$ZBX_SERVER_PORT = '10051';
+\$ZBX_SERVER_NAME = '$host';
+
+\$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
+?>
+EOF"
+
+# Configure locale
+sudo sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+sudo locale-gen
+sudo update-locale LANG=en_US.UTF-8
+clear
+
+# Inicie os serviços do Zabbix e Apache2
+sudo systemctl restart zabbix-server zabbix-agent apache2
+sudo systemctl enable zabbix-server zabbix-agent apache2
+
+# Verificar serviços
+clear
+echo -e "\n" && sudo systemctl status zabbix-server --no-pager | ccze -A | sed -n '/Active/p;/Loaded/p;/Duration/p'
+echo -e "\n" && sudo systemctl status zabbix-agent --no-pager | ccze -A | sed -n '/Active/p;/Loaded/p;/Duration/p'
+echo -e "\n" && sudo systemctl status apache2 --no-pager | ccze -A | sed -n '/Active/p;/Loaded/p;/Duration/p'
+echo -e "\n" && sudo systemctl status mariadb --no-pager | ccze -A | sed -n '/Active/p;/Loaded/p;/Duration/p'
+echo -e "\n"
+echo -e "\n${GREEN}${BOLD} Zabbix Server instalado e configurado com sucesso! ${RESET}"
+echo -e "\n"
+echo -e "\n${BLUE}${BOLD} Agora acesse via browser ${WHITE}${BOLD}http://$IP/zabbix/setup.php ${RESET}"
+echo -e "\n${BLUE}${BOLD} Usuário: ${WHITE}${BOLD}Admin ${RESET}"
+echo -e "\n${BLUE}${BOLD} Senha: ${WHITE}${BOLD}zabbix ${RESET}"
+echo -e "\n"
+date
+unset passDB IP host GREEN BLUE WHITE BOLD RESET 
+history -c 
