@@ -21,12 +21,13 @@ sudo apt update && sudo apt upgrade -y
 # Atualize timezone
 timedatectl set-timezone America/Sao_Paulo
 
-# Instalar o ccze (color service) e Neofetch
+# Instalar o ccze (color service), Neofetch e agente qemu
 sudo apt install -y ccze
 sudo apt install -y neofetch
 neofetch
 bash -c 'echo -e "reset\nneofetch\nsystemctl list-units --type service | egrep \"apache2|mariadb|ssh\"" >> /etc/profile.d/mymotd.sh && chmod +x /etc/profile.d/mymotd.sh'
 echo > /etc/motd
+apt-get install qemu-guest-agent
 
 # Instalar Apache2
 sudo apt install -y apache2
