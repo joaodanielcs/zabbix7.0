@@ -87,6 +87,29 @@ sudo locale-gen
 sudo update-locale LANG=en_US.UTF-8
 clear
 
+# Instalar pacote adicional de imagens
+sudo apt install -y dpkg-dev
+sudo apt source -y zabbix
+sudo apt install -y wget unzip
+wget https://raw.githubusercontent.com/diego-cavalcante/zabbix.icones/refs/heads/master/zabbix.icones.zip -O /tmp/zabbix-icones.zip
+unzip /tmp/zabbix-icones.zip -d /tmp
+if [ ! -d /usr/share/zabbix/assets/images/general ]; then
+  sudo mkdir -p /usr/share/zabbix/assets/images/general/img
+fi
+sudo cp -r /tmp/zabbix.icones/* /usr/share/zabbix/assets/images/general/img/
+find /usr/share/zabbix/assets/images/general/img/ -type f -exec mv {} /usr/share/zabbix/assets/images/general/img/ \;
+find /usr/share/zabbix/assets/images/general/img/ -type d -empty -delete
+rm -rf /usr/share/zabbix/assets/images/general/img/screenshots
+rm -rf /usr/share/zabbix/assets/images/general/img/zabbix
+rm -rf /tmp/zabbix.icones
+rm -rf /tmp/zabbix-icones.zip
+sudo sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 30M/' /etc/php/8.2/apache2/php.ini
+sudo sed -i 's/upload_max_filesize 2M/upload_max_filesize 30M/' /etc/zabbix/apache.conf
+script=$(find / -name "png_to_xml.sh" 2>/dev/null)
+cd /usr/share/zabbix/assets/images/general/
+cp -rpvf $script .
+./png_to_xml.sh img icones.xml
+
 # Inicie os serviços do Zabbix e Apache2
 sudo systemctl restart zabbix-server zabbix-agent apache2
 sudo systemctl enable zabbix-server zabbix-agent apache2
