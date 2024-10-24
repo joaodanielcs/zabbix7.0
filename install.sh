@@ -87,29 +87,6 @@ sudo locale-gen
 sudo update-locale LANG=en_US.UTF-8
 clear
 
-# Instalar pacote adicional de imagens
-sudo apt install -y dpkg-dev
-sudo apt source -y zabbix
-sudo apt install -y wget unzip
-wget https://raw.githubusercontent.com/diego-cavalcante/zabbix.icones/refs/heads/master/zabbix.icones.zip -O /tmp/zabbix-icones.zip
-unzip /tmp/zabbix-icones.zip -d /tmp
-if [ ! -d /usr/share/zabbix/assets/images/general ]; then
-  sudo mkdir -p /usr/share/zabbix/assets/images/general/img
-fi
-sudo cp -r /tmp/zabbix.icones/* /usr/share/zabbix/assets/images/general/img/
-find /usr/share/zabbix/assets/images/general/img/ -type f -exec mv {} /usr/share/zabbix/assets/images/general/img/ \;
-find /usr/share/zabbix/assets/images/general/img/ -type d -empty -delete
-rm -rf /usr/share/zabbix/assets/images/general/img/screenshots
-rm -rf /usr/share/zabbix/assets/images/general/img/zabbix
-rm -rf /tmp/zabbix.icones
-rm -rf /tmp/zabbix-icones.zip
-sudo sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 30M/' /etc/php/8.2/apache2/php.ini
-sudo sed -i 's/upload_max_filesize 2M/upload_max_filesize 30M/' /etc/zabbix/apache.conf
-script=$(find / -name "png_to_xml.sh" 2>/dev/null)
-cd /usr/share/zabbix/assets/images/general/
-cp -rpvf $script .
-./png_to_xml.sh img icones.xml
-
 # Inicie os serviços do Zabbix e Apache2
 sudo systemctl restart zabbix-server zabbix-agent apache2
 sudo systemctl enable zabbix-server zabbix-agent apache2
@@ -123,9 +100,14 @@ echo -e "\n" && sudo systemctl status mariadb --no-pager | ccze -A | sed -n '/Ac
 echo -e "\n"
 echo -e "\n${GREEN}${BOLD} Zabbix Server instalado e configurado com sucesso! ${RESET}"
 echo -e "\n"
-echo -e "\n${BLUE}${BOLD} Agora acesse via browser ${WHITE}${BOLD}http://$IP/zabbix/setup.php ${RESET}"
+echo -e "\n${BLUE}${BOLD} Agora acesse via browser ${WHITE}${BOLD}http://$IP/zabbix/ ${RESET}"
 echo -e "\n${BLUE}${BOLD} Usuário: ${WHITE}${BOLD}Admin ${RESET}"
 echo -e "\n${BLUE}${BOLD} Senha: ${WHITE}${BOLD}zabbix ${RESET}"
+echo -e "\n${BLUE}${BOLD} Acesse: ${WHITE}${BOLD}Monitoring >> Maps >> Import ${RESET}"
+echo -e "\n${BLUE}${BOLD} Importe essas URLs:  ${RESET}"
+echo -e "\n${WHITE}${BOLD}      https://raw.githubusercontent.com/joaodanielcs/zabbix7.0/refs/heads/main/icones.xml ${RESET}"
+echo -e "\n${WHITE}${BOLD}      https://raw.githubusercontent.com/joaodanielcs/zabbix7.0/refs/heads/main/icones2.xml ${RESET}"
+echo -e "\n${WHITE}${BOLD}      https://raw.githubusercontent.com/joaodanielcs/zabbix7.0/refs/heads/main/icones3.xml ${RESET}"
 echo -e "\n"
 date
 unset passDB IP host GREEN BLUE WHITE BOLD RESET 
