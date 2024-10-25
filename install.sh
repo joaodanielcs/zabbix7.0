@@ -87,6 +87,10 @@ sudo locale-gen
 sudo update-locale LANG=en_US.UTF-8
 clear
 
+# Aumentar o limite do php para importar os pacotes de Icones
+sudo sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 30M/' /etc/php/8.2/apache2/php.ini
+sudo sed -i 's/upload_max_filesize 2M/upload_max_filesize 30M/' /etc/zabbix/apache.conf
+
 # Inicie os serviços do Zabbix e Apache2
 sudo systemctl restart zabbix-server zabbix-agent apache2
 sudo systemctl enable zabbix-server zabbix-agent apache2
