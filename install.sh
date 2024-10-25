@@ -50,6 +50,7 @@ sudo mariadb -uroot -p$passDB -e "CREATE USER 'zabbix'@'localhost' IDENTIFIED BY
 sudo mariadb -uroot -p$passDB -e "GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';"
 sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 1;"
 sudo mariadb -uroot -p$passDB -e "FLUSH PRIVILEGES;"
+sudo mariadb -uroot -p$passDB -e "UPDATE profiles SET value='dark-theme' WHERE idx='web.theme';"
 
 # Adicione o repositório do Zabbix 7.0
 wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest+debian12_all.deb && dpkg -i zabbix-release_latest+debian12_all.deb
@@ -63,6 +64,7 @@ sleep 10
 zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mariadb --default-character-set=utf8mb4 -uzabbix -p$passDB zabbix
 sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 0;"
 sudo sed -i "s/^# DBPassword=.*/DBPassword=$passDB/" /etc/zabbix/zabbix_server.conf
+sudo sed -i 's/;date.timezone =/date.timezone = America\/Sao_Paulo/' /etc/php/8.2/apache2/php.ini
 
 sudo bash -c "cat <<'EOF' > /etc/zabbix/web/zabbix.conf.php
 <?php
@@ -87,8 +89,11 @@ EOF"
 
 # Configure locale
 sudo sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+sudo sed -i 's/# pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
 sudo locale-gen
 sudo update-locale LANG=en_US.UTF-8
+
+pt_BR.UTF-8 UTF-8
 clear
 
 # Aumentar o limite do php para importar os pacotes de Icones
