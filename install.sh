@@ -50,8 +50,6 @@ sudo mariadb -uroot -p$passDB -e "CREATE USER 'zabbix'@'localhost' IDENTIFIED BY
 sudo mariadb -uroot -p$passDB -e "GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';"
 sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 1;"
 sudo mariadb -uroot -p$passDB -e "FLUSH PRIVILEGES;"
-sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE users SET theme='dark-theme' WHERE userid=1;"
-sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE config SET default_theme='dark-theme';"
 
 # Adicione o repositório do Zabbix 7.0
 wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest+debian12_all.deb && dpkg -i zabbix-release_latest+debian12_all.deb
@@ -63,6 +61,8 @@ sudo apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf z
 # Configure o Zabbix
 sleep 10
 zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | mariadb --default-character-set=utf8mb4 -uzabbix -p$passDB zabbix
+sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE users SET theme='dark-theme' WHERE userid=1;"
+sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE config SET default_theme='dark-theme';"
 sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 0;"
 sudo sed -i "s/^# DBPassword=.*/DBPassword=$passDB/" /etc/zabbix/zabbix_server.conf
 sudo sed -i 's/;date.timezone =/date.timezone = America\/Sao_Paulo/' /etc/php/8.2/apache2/php.ini
