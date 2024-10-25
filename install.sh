@@ -50,7 +50,8 @@ sudo mariadb -uroot -p$passDB -e "CREATE USER 'zabbix'@'localhost' IDENTIFIED BY
 sudo mariadb -uroot -p$passDB -e "GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';"
 sudo mariadb -uroot -p$passDB -e "SET GLOBAL log_bin_trust_function_creators = 1;"
 sudo mariadb -uroot -p$passDB -e "FLUSH PRIVILEGES;"
-sudo mariadb -uroot -p$passDB -e "UPDATE profiles SET value='dark-theme' WHERE idx='web.theme';"
+sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE users SET theme='dark-theme' WHERE userid=1;"
+sudo mariadb -uroot -p$passDB -e "USE zabbix; UPDATE config SET default_theme='dark-theme';"
 
 # Adicione o repositório do Zabbix 7.0
 wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest+debian12_all.deb && dpkg -i zabbix-release_latest+debian12_all.deb
