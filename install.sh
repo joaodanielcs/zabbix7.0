@@ -115,4 +115,5 @@ echo -e "\n${WHITE}${BOLD}      https://raw.githubusercontent.com/joaodanielcs/z
 echo -e "\n"
 date
 unset passDB IP host GREEN BLUE WHITE BOLD RESET 
-history -c 
+history -c && cat /dev/null > ~/.bash_history
+
