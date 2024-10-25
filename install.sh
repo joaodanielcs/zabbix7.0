@@ -25,6 +25,10 @@ timedatectl set-timezone America/Sao_Paulo
 sudo apt install -y ccze
 sudo apt install -y neofetch
 neofetch
+clear
+sed -i 's/# info "Local IP" local_ip/info underline\n    info "Local IP" local_ip/' .config/neofetch/config.conf
+sed -i 's/# info "Public IP" public_ip/info "Public IP" public_ip/' .config/neofetch/config.conf
+sudo echo 'alias neofetch="neofetch --title_fqdn on --memory_unit gib --memory_percent on --speed_shorthand on --cpu_temp C"' >> ~/.bashrc
 bash -c 'echo -e "reset\nneofetch\nsystemctl list-units --type service | egrep \"apache2|mariadb|ssh\"" >> /etc/profile.d/mymotd.sh && chmod +x /etc/profile.d/mymotd.sh'
 echo > /etc/motd
 sudo apt install -y qemu-guest-agent
